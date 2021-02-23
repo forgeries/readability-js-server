@@ -28,10 +28,24 @@ app.get("/", (req, res) => {
 
 app.post("/", bodyParser, (req, res) => {
   const url = req.body.url;
+  const elements = req.body.elements;
+
+  if (elements) {
+    const dom = new JSDOM(elements);
+    const parsed = new Readability(dom.window.document).parse();
+    return res
+      .status(200)
+      .send({
+        url: url,
+        content: DOMPurify.sanitize(parsed.content, domPurifyOptions),
+        excerpt: parsed.excerpt || "",
+      })
+      .end();
+  }
 
   if (url === undefined || url === "") {
     return res.status(400).send({
-      error: 'Send JSON, like so: {"url": "https://url/to/whatever"}',
+      error: 'Send JSON, like so: {"url": "https://url/to/whatever" "elements": "..."}',
     }).end;
   }
 
